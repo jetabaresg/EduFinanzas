@@ -1,21 +1,49 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block title %}Acerca de - EduFinanzas{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1>Acerca de EduFinanzas</h1>
-    <p>Somos una plataforma dedicada </p>
-    
-    <h2 style="margin-top: 2rem;">Objetivo</h2>
-    <p>El proyecto “EduFinanzas” es una plataforma digital diseñada para fortalecer la inclusión financiera y facilitar el acceso a la banca moderna.</p>
-    
-    <h2 style="margin-top: 2rem;">¿Qué ofrecemos?</h2>
-    <ul style="list-style: none; margin: 1rem 0;">
-        <li style="padding: 0.5rem 0;">Cursos de finanzas personales</li>
-        <li style="padding: 0.5rem 0;">Herramientas Que simulan entornos reales </li>
-    </ul>
-    
-    <a href="{% url 'home' %}" class="btn">Volver al Inicio</a>
-</div>
+
+<section class="container py-5">
+
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">Acerca de EduFinanzas</h1>
+        <p class="text-muted fs-5" style="max-width: 700px; margin: auto;">
+            Nuestra misión es ayudarte a tomar decisiones financieras más inteligentes
+            mediante educación clara, moderna y accesible.
+        </p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <div class="card shadow-sm border-0 p-4 p-md-5 mb-4">
+                <h3 class="fw-bold mb-3">Nuestro Objetivo</h3>
+                <p class="text-muted">
+                    EduFinanzas contribuye a la inclusión financiera brindando contenidos prácticos e interactivos
+                    para que cualquier persona pueda entender cómo funcionan los productos bancarios y cómo mejorar
+                    su relación con el dinero.
+                </p>
+            </div>
+
+            <div class="card shadow-sm border-0 p-4 p-md-5">
+                <h3 class="fw-bold mb-3">¿Qué ofrecemos?</h3>
+                <ul class="text-muted fs-5">
+                    <li>Formación en finanzas personales para principiantes.</li>
+                    <li>Herramientas para simular escenarios bancarios reales.</li>
+                    <li>Información clara sobre bancos tradicionales y digitales.</li>
+                    <li>Lecciones y contenido estructurado paso a paso.</li>
+                </ul>
+            </div>
+
+            <div class="text-center mt-5">
+                <a href="{% url 'home' %}" class="btn btn-primary btn-lg px-4">
+                    ← Volver al Inicio
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
 {% endblock %}

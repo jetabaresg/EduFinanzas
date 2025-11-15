@@ -6,10 +6,12 @@ from django.contrib import messages
 BANCOS_TRADICIONALES = [
     {'id': 'BanColombia', 'nombre': 'BanColombia'},
     {'id': 'BancoBogota', 'nombre': 'Davivienda'},
+    {'id': 'Próximamente', 'nombre': 'Próximamente'},
 ]
 BANCOS_DIGITALES= [
     {'id': 'Nequi', 'nombre': 'Nequi'},
     {'id': 'MiBancolombia', 'nombre': 'MiBancolombia'},
+    {'id': 'Próximamente', 'nombre': 'Próximamente'},
 ]
 
 # Create your views here.
@@ -67,7 +69,7 @@ def banco_detalle(request, banco_id):
             ],
             'consejos': ''
         },
-        'banco4': {
+        'MiBancolombia': {
             'lecciones': [
             ],
             'consejos': ''
