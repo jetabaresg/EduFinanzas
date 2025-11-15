@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Aprende - EduFinanzas{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>🎓 Aprende Finanzas</h1>
+    <p class="lead">{{ mensaje }}</p>
+    
+    {% if error %}
+    <div style="background: #ffebee; color: #c62828; padding: 1rem; border-radius: 5px; margin: 1rem 0;">
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    <!-- Bancos Tradicionales -->
+    {% if bancos_tradicionales %}
+    <section style="margin: 3rem 0;">
+        <h2>🏦 Bancos Tradicionales</h2>
+        <p style="color: #666; margin-bottom: 1.5rem;">Instituciones financieras con presencia física y amplia trayectoria.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            {% for banco in bancos_tradicionales %}
+            <div style="border: 2px solid #e3f2fd; background: #f3f9ff; border-radius: 10px; padding: 1.5rem; transition: transform 0.3s;">
+                <h3>🏛️ {{ banco.nombre }}</h3>
+                <p style="color: #666; margin: 1rem 0;">{{ banco.descripcion }}</p>
+                <a href="{% url 'banco_detalle' banco.id %}" 
+                   style="display: inline-block; background: #2196f3; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                    Aprender Más 📚
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% else %}
+    <div style="background: #ffebee; padding: 1rem; border-radius: 5px; margin: 2rem 0;">
+        <p>⚠️ No hay bancos tradicionales disponibles.</p>
+    </div>
+    {% endif %}
+    
+    <!-- Bancos Digitales -->
+    {% if bancos_digitales %}
+    <section style="margin: 3rem 0;">
+        <h2>📱 Bancos Digitales</h2>
+        <p style="color: #666; margin-bottom: 1.5rem;">Fintechs que operan 100% online con tecnología innovadora.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            {% for banco in bancos_digitales %}
+            <div style="border: 2px solid #f3e5f5; background: #faf4fb; border-radius: 10px; padding: 1.5rem; transition: transform 0.3s;">
+                <h3>📲 {{ banco.nombre }}</h3>
+                <p style="color: #666; margin: 1rem 0;">{{ banco.descripcion }}</p>
+                <a href="{% url 'banco_detalle' banco.id %}" 
+                   style="display: inline-block; background: #9c27b0; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                    Explorar 🚀
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% else %}
+    <div style="background: #ffebee; padding: 1rem; border-radius: 5px; margin: 2rem 0;">
+        <p>⚠️ No hay bancos digitales disponibles.</p>
+    </div>
+    {% endif %}
+    
+    <!-- Información comparativa -->
+    <div style="background: #fff3e0; padding: 1.5rem; border-radius: 10px; margin-top: 2rem;">
+        <h3>💡 ¿Bancos Tradicionales vs. Digitales?</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+            <div>
+                <h4>🏦 Tradicionales</h4>
+                <ul>
+                    <li>Sucursales físicas</li>
+                    <li>Atención personal presencial</li>
+                    <li>Amplia gama de productos</li>
+                    <li>Mayor seguridad percibida</li>
+                </ul>
+            </div>
+            <div>
+                <h4>📱 Digitales</h4>
+                <ul>
+                    <li>Sin comisiones o muy bajas</li>
+                    <li>Operación 24/7 desde tu celular</li>
+                    <li>Procesos más ágiles</li>
+                    <li>Tecnología innovadora</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
