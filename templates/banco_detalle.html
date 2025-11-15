@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ banco.nombre }} - EduFinanzas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .badge-digital {
+        background: #9c27b0;
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+    }
+    .badge-tradicional {
+        background: #2196f3;
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <a href="{% url 'aprende' %}" style="color: #667eea; text-decoration: none; margin-bottom: 1rem; display: inline-block;">
+        ← Volver a la lista de bancos
+    </a>
+    
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+        <h1>
+            {% if banco.id|slice:":6" == 'digital' %}📱
+            {% else %}🏦
+            {% endif %} 
+            {{ banco.nombre }}
+        </h1>
+        
+        <!-- <span class="{% if banco.id|slice:":6" == 'digital' %}badge-digital{% else %}badge-tradicional{% endif %}">
+            {% if banco.id|slice:":6" == 'digital' %}Digital{% else %}Tradicional{% endif %}
+        </span> -->
+    </div>
+    
+    {% if banco.descripcion %}
+    <p class="lead">{{ banco.descripcion }}</p>
+    {% endif %}
+    
+    {% if info_adicional.consejos %}
+    <div style="background: #e8f5e8; padding: 1.5rem; border-radius: 10px; margin: 2rem 0;">
+        <h3>💡 {{ info_adicional.consejos }}</h3>
+    </div>
+    {% endif %}
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
+        <div>
+            <h2>📚 Lecciones Disponibles:</h2>
+            <div style="display: grid; gap: 1rem; margin: 1.5rem 0;">
+                {% for leccion in info_adicional.lecciones %}
+                <div style="display: flex; align-items: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <span style="margin-right: 1rem;">📖</span>
+                    <span>{{ leccion }}</span>
+                </div>
+                {% empty %}
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                    <p>Lecciones en desarrollo...</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div>
+            <h2>⭐ Ventajas Principales:</h2>
+            <div style="display: grid; gap: 1rem; margin: 1.5rem 0;">
+                {% for ventaja in info_adicional.ventajas %}
+                <div style="display: flex; align-items: center; padding: 1rem; background: #fff3e0; border-radius: 8px;">
+                    <span style="margin-right: 1rem;">✅</span>
+                    <span>{{ ventaja }}</span>
+                </div>
+                {% empty %}
+                <div style="padding: 1rem; background: #fff3e0; border-radius: 8px; text-align: center;">
+                    <p>Ventajas en desarrollo...</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 2rem; padding: 1.5rem; background: #e3f2fd; border-radius: 10px;">
+        <h3>🎯 ¿Listo para aprender?</h3>
+        <p>Completa estas lecciones para dominar los productos de {{ banco.nombre }}.</p>
+        <a href="{% url 'aprende' %}" class="btn">Explorar Otros Bancos</a>
+    </div>
+</div>
+{% endblock %}
