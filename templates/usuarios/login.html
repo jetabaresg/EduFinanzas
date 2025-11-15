@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow p-4" style="max-width: 400px; width: 100%;">
+        <h3 class="text-center mb-4">Iniciar sesión</h3>
+
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div class="mb-3">
+                <label for="id_username" class="form-label">Usuario</label>
+                <input type="text" name="username" class="form-control" id="id_username">
+            </div>
+
+            <div class="mb-3">
+                <label for="id_password" class="form-label">Contraseña</label>
+                <input type="password" name="password" class="form-control" id="id_password">
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit">Ingresar</button>
+        </form>
+
+        <p class="text-center mt-3">
+            ¿No tienes cuenta? <a href="{% url 'usuarios:registro' %}">Regístrate aquí</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,39 +1,66 @@
 {% extends 'base.html' %}
 
-{% block title %}Inicio - EduFinanzas{% endblock %}
-
 {% block content %}
-<div class="card">
-    <h1>Bienvenido a EduFinanzas</h1>
-    <p class="lead">Tu plataforma de educación financiera personal</p>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 2rem 0;">
-        <div style="padding: 1.5rem; background: #f8f9fa; border-radius: 10px;">
-            <h3>📊 Control de Gastos</h3>
-            <p>Aprende a trackear y controlar tus gastos mensuales</p>
-        </div>
-        
-        <div style="padding: 1.5rem; background: #f8f9fa; border-radius: 10px;">
-            <h3>🎯 Metas Financieras</h3>
-            <p>Establece y alcanza tus objetivos financieros</p>
-        </div>
-        
-        <div style="padding: 1.5rem; background: #f8f9fa; border-radius: 10px;">
-            <h3>📈 Inversiones</h3>
-            <p>Descubre cómo hacer crecer tu dinero</p>
-        </div>
-    </div>
-    
-    <a href="{% url 'acerca' %}" class="btn">Conoce Más</a>
-</div>
 
-<div class="card">
-    <h2>¿Por qué la educación financiera?</h2>
-    <ul style="list-style: none; margin: 1rem 0;">
-        <li style="padding: 0.5rem 0;">✅ Toma el control de tu dinero</li>
-        <li style="padding: 0.5rem 0;">✅ Alcanza tu independencia financiera</li>
-        <li style="padding: 0.5rem 0;">✅ Prepara tu futuro</li>
-        <li style="padding: 0.5rem 0;">✅ Reduce el estrés financiero</li>
-    </ul>
-</div>
+<!-- HERO -->
+<section class="bg-primary text-white text-center py-5">
+    <div class="container">
+        <h1 class="fw-bold display-4">Bienvenido a <span class="text-warning">EduFinanzas</span></h1>
+        <p class="lead mt-3">La plataforma que te ayuda aprender sobre finanzas</p>
+        <a href="#" class="btn btn-light btn-lg mt-3 px-4 fw-semibold shadow-sm">Conoce Más</a>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="container my-5">
+    <h2 class="text-center fw-bold mb-4">¿Qué puedes hacer en EduFinanzas?</h2>
+
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 text-center border-0">
+                <div class="card-body p-4">
+                    <div class="display-5 mb-3"></div>
+                    <h4 class="fw-bold">Aprender a Controlar mis Gastos</h4>
+                    <p class="text-muted">Aprender a registrar y analizar tus ingresos y gastos fácilmente.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 text-center border-0">
+                <div class="card-body p-4">
+                    <div class="display-5 mb-3"></div>
+                    <h4 class="fw-bold">Definir Metas Financieras</h4>
+                    <p class="text-muted">Aprender a definir metas y organizar un plan para alcanzar tus objetivos.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 text-center border-0">
+                <div class="card-body p-4">
+                    <div class="display-5 mb-3"></div>
+                    <h4 class="fw-bold">Herramientas Financieras</h4>
+                    <p class="text-muted">Aprender a usar las Herramientas financieras</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- IMPORTANCIA -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h2 class="fw-bold mb-4">¿Por qué es importante la educación financiera?</h2>
+        <ul class="fs-5">
+            <li>Te permite tomar control de tus finanzas personales</li>
+            <li>Alcanzas estabilidad y libertad financiera</li>
+            <li>Planificas y proteges tu futuro</li>
+            <li>Reduces el estrés relacionado con el dinero</li>
+        </ul>
+    </div>
+</section>
+
 {% endblock %}

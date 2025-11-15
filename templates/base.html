@@ -1,129 +1,73 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}EduFinanzas - Tu Educación Financiera{% endblock %}</title>
+    <title>EduFinanzas</title>
+
+    <!-- BOOTSTRAP -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        /* Estilos globales */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background-color: #f5f7fb;
         }
-        
-        .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        .section-title {
+            font-weight: 700;
+            margin-top: 40px;
+            margin-bottom: 20px;
         }
-        
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 2rem;
+
+        .feature-card {
+            transition: 0.2s;
         }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
-            text-decoration: none;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-        
-        .nav-links a {
-            color: #333;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        
-        .nav-links a:hover {
-            color: #667eea;
-        }
-        
-        .main-content {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
-        
-        .footer {
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            text-align: center;
-            padding: 1.5rem;
-            margin-top: 3rem;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 25px;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: 500;
-            transition: transform 0.3s;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
     </style>
-    {% block extra_css %}{% endblock %}
 </head>
+
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="{% url 'home' %}" class="logo">EduFinanzas</a>
-            <div class="nav-links">
-                <a href="{% url 'home' %}">Inicio</a>
-                <a href="{% url 'acerca' %}">Acerca de</a>
-                <a href="{% url 'aprende' %}">Aprende</a>
-                <a href="{% url 'feedback' %}">📝 Feedback</a>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background:#0D47A1;">
+        <div class="container">
+
+            <a class="navbar-brand text-white fw-bold" href="{% url 'home' %}">
+                EduFinanzas
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="menu">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link text-white" href="{% url 'home' %}">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="{% url 'aprende' %}">Aprende</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="{% url 'acerca' %}">Acerca</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="{% url 'feedback' %}">Feedback</a></li>
+                </ul>
+
+                <a class="btn btn-success ms-3" href="{% url 'usuarios:login' %}">
+                    Iniciar sesión
+                </a>
             </div>
+
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        {% block content %}
-        <!-- El contenido específico de cada página va aquí -->
-        {% endblock %}
-    </main>
+    <!-- CONTENIDO DINÁMICO DE CADA PÁGINA -->
+    {% block content %}
+    {% endblock %}
 
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; Jeronimo Tabares-Juan Manuel Lotero (2025)</p>
-    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    {% block extra_js %}{% endblock %}
 </body>
+
 </html>
