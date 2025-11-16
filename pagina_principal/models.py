@@ -1,4 +1,59 @@
 from django.db import models
+from django.core.exceptions import ValidationError
+
+
+class Modulo(models.Model):
+    titulo = models.CharField(max_length=200, verbose_name="Título del Módulo")
+    descripcion = models.TextField(verbose_name="Descripción del módulo")
+    orden = models.PositiveIntegerField(default=1, verbose_name="Orden en el curso")
+    publicado = models.BooleanField(default=True, verbose_name="Publicado")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['orden']
+        verbose_name = "Módulo"
+        verbose_name_plural = "Módulos"
+
+    def __str__(self):
+        return f"{self.orden}. {self.titulo}"
+
+
+class Contenido(models.Model):
+    TIPO_CHOICES = [
+        ('texto', 'Texto / Explicación'),
+        ('video', 'Video'),
+        ('pdf', 'Documento PDF'),
+        ('quiz', 'Cuestionario / Evaluación'),
+        ('imagen', 'Imagen'),
+    ]
+
+    modulo = models.ForeignKey(Modulo, on_delete=models.CASCADE, related_name="contenidos")
+    titulo = models.CharField(max_length=200)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    descripcion = models.TextField(blank=True, null=True)
+
+    # Campo para PDFs
+    archivo = models.FileField(upload_to="contenidos/", blank=True, null=True)
+
+    # Campo para imágenes
+    imagen = models.ImageField(upload_to="imagenes/", blank=True, null=True)
+
+    # Campo para videos externos
+    url_video = models.URLField(blank=True, null=True)
+
+    orden = models.PositiveIntegerField(default=1)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if self.tipo == "video" and not self.url_video:
+            raise ValidationError("Debes ingresar una URL si el contenido es de tipo video.")
+        if self.tipo == "pdf" and not self.archivo:
+            raise ValidationError("Debes adjuntar un archivo PDF.")
+        if self.tipo == "imagen" and not self.imagen:
+            raise ValidationError("Debes subir una imagen para este contenido.")
+    def __str__(self):
+        return f"{self.modulo.titulo} - {self.titulo}"
+
 
 class Feedback(models.Model):
     TIPO_CHOICES = [
@@ -7,7 +62,7 @@ class Feedback(models.Model):
         ('sugerencia', 'Sugerencia'),
         ('calificacion', 'Calificación'),
     ]
-    
+
     CALIFICACION_CHOICES = [
         (1, '1 ⭐ - Muy Malo'),
         (2, '2 ⭐⭐ - Malo'),
@@ -15,7 +70,7 @@ class Feedback(models.Model):
         (4, '4 ⭐⭐⭐⭐ - Bueno'),
         (5, '5 ⭐⭐⭐⭐⭐ - Excelente'),
     ]
-    
+
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     nombre = models.CharField(max_length=100)
     email = models.EmailField()
@@ -24,6 +79,31 @@ class Feedback(models.Model):
     calificacion = models.IntegerField(choices=CALIFICACION_CHOICES, null=True, blank=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     leido = models.BooleanField(default=False)
-    
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = "Feedback"
+        verbose_name_plural = "Feedbacks"
+
+    def clean(self):
+        if self.tipo == "calificacion" and not self.calificacion:
+            raise ValidationError("Debe ingresar una calificación si el tipo es 'calificación'.")
+
     def __str__(self):
         return f"{self.tipo} - {self.nombre} - {self.fecha_creacion.strftime('%Y-%m-%d')}"
+
+
+class Progreso(models.Model):
+    usuario = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    modulo = models.ForeignKey(Modulo, on_delete=models.CASCADE)
+    completado = models.BooleanField(default=False)
+    fecha_completado = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('usuario', 'modulo')
+        verbose_name = "Progreso"
+        verbose_name_plural = "Progresos"
+
+    def __str__(self):
+        estado = "Completado" if self.completado else "Pendiente"
+        return f"{self.usuario.username} - {self.modulo.titulo}: {estado}"

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container py-4">
+
+    <h2 class="fw-bold">{{ contenido.titulo }}</h2>
+
+    {% if contenido.descripcion %}
+        <p class="text-muted">{{ contenido.descripcion }}</p>
+    {% endif %}
+
+    <hr>
+
+    <!-- YouTube (sin error 153) -->
+    {% if embed_url %}
+    <div class="ratio ratio-16x9 mb-4">
+        <iframe 
+            src="{{ embed_url }}" 
+            frameborder="0" 
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin">
+        </iframe>
+    </div>
+    {% endif %}
+
+    <!-- Video subido -->
+    {% if contenido.video %}
+        <video class="w-100 mb-4 rounded shadow" controls>
+            <source src="{{ contenido.video.url }}">
+            Tu navegador no soporta videos HTML5.
+        </video>
+    {% endif %}
+
+    <!-- Imagen subida -->
+    {% if contenido.imagen %}
+    <div class="text-center mb-4">
+        <img src="{{ contenido.imagen.url }}" 
+             alt="Imagen adjunta" 
+             class="img-fluid rounded shadow">
+    </div>
+    {% endif %}
+
+    <!-- Archivo adjunto -->
+    {% if contenido.archivo %}
+    <div class="mb-4 p-3 bg-light border rounded d-flex align-items-center">
+
+        {% with contenido.archivo.name|lower as file_name %}
+            {% if ".pdf" in file_name %}
+                <i class="bi bi-file-earmark-pdf text-danger fs-3 me-3"></i>
+            {% elif ".doc" in file_name or ".docx" in file_name %}
+                <i class="bi bi-file-earmark-word text-primary fs-3 me-3"></i>
+            {% elif ".xls" in file_name or ".xlsx" in file_name %}
+                <i class="bi bi-file-earmark-excel text-success fs-3 me-3"></i>
+            {% elif ".png" in file_name or ".jpg" in file_name or ".jpeg" in file_name %}
+                <i class="bi bi-file-earmark-image text-info fs-3 me-3"></i>
+            {% else %}
+                <i class="bi bi-file-earmark fs-3 me-3"></i>
+            {% endif %}
+        {% endwith %}
+
+        <div>
+            <strong>Archivo adjunto:</strong><br>
+            <a href="{{ contenido.archivo.url }}" target="_blank" 
+               class="btn btn-outline-primary btn-sm mt-2">
+                📄 Abrir / Descargar
+            </a>
+        </div>
+
+    </div>
+    {% endif %}
+
+    <!-- Texto -->
+    <div class="mb-4">
+        {{ contenido.texto|safe }}
+    </div>
+
+    <a href="{% url 'detalle_modulo' contenido.modulo.id %}" class="btn btn-secondary">
+        ← Volver al módulo
+    </a>
+
+</div>
+
+{% endblock %}
