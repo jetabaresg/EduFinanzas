@@ -1,135 +1,138 @@
-from django.shortcuts import render,redirect
-from django.http import HttpResponse
-from .models import Feedback 
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.utils import timezone
 
-BANCOS_TRADICIONALES = [
-    {'id': 'BanColombia', 'nombre': 'BanColombia'},
-    {'id': 'BancoBogota', 'nombre': 'Davivienda'},
-    {'id': 'Próximamente', 'nombre': 'Próximamente'},
-]
-BANCOS_DIGITALES= [
-    {'id': 'Nequi', 'nombre': 'Nequi'},
-    {'id': 'MiBancolombia', 'nombre': 'MiBancolombia'},
-    {'id': 'Próximamente', 'nombre': 'Próximamente'},
-]
+from .models import Modulo, Contenido, Feedback, Progreso
 
-# Create your views here.
+
+# ===========================
+#   PÁGINAS PRINCIPALES
+# ===========================
 def home(request):
-    return render(request, 'home.html')
+    return render(request, "home.html")
+
 
 def acerca(request):
-    return render(request, 'acerca.html')
+    return render(request, "acerca.html")
 
+
+# ===========================
+#         APRENDE
+# ===========================
 def aprende(request):
-    
-    contexto = {
-        'bancos_tradicionales': BANCOS_TRADICIONALES,
-        'bancos_digitales': BANCOS_DIGITALES,
-        'mensaje': 'Para comenzar tu aprendizaje selecciona el banco:'
-    }
-    return render(request, 'aprende.html', contexto)
+    """
+    Muestra todos los módulos publicados.
+    """
+    modulos = Modulo.objects.filter(publicado=True).order_by("orden")
 
-def banco_detalle(request, banco_id):
-    banco_seleccionado = None
-    for banco in BANCOS_TRADICIONALES:
-        if banco['id'] == banco_id:
-            banco_seleccionado = banco
-            break
-    
-    for banco in BANCOS_DIGITALES:
-        if banco['id'] == banco_id:
-            banco_seleccionado = banco
-            break
-    
-    if not banco_seleccionado:
-      return render(request, 'aprende.html', {
-          'bancos_tradicionales': BANCOS_TRADICIONALES,
-          'bancos_digitales': BANCOS_DIGITALES,
-          'error': 'Banco no encontrado'
-        })
-    
-    informacion_bancos = {
-        'Bancolombia': {
-            'lecciones': [
-                'Cuentas de Ahorro Básicas',
-                'Creditos',
-                'Préstamos Personales',
-                'Seguros Básicos'
-            ],
-            'consejos': 'Ideal para comenzar tu vida financiera'
-        },
-        'BancoBogota': {
-            'lecciones': [
-            ],
-            'consejos': ''
-        },
-        'Nequi': {
-            'lecciones': [
-            ],
-            'consejos': ''
-        },
-        'MiBancolombia': {
-            'lecciones': [
-            ],
-            'consejos': ''
-        }
-    }
-    
     contexto = {
-        'banco': banco_seleccionado,
-        'info_adicional': informacion_bancos.get(banco_id, {
-            'lecciones': ['Información en desarrollo...'],
-            'consejos': 'Próximamente más información',
-            'ventajas': ['Características en desarrollo']
-        })
+        "mensaje": "Selecciona un módulo y empieza a aprender:",
+        "modulos": modulos,
     }
-    return render(request, 'banco_detalle.html', contexto)
+    return render(request, "aprende.html", contexto)
 
-def contacto(request):
-    if request.method == 'POST':
-        nombre = request.POST.get('nombre')
-        contexto = {'mensaje_exito': f'¡Gracias {nombre}! Te contactaremos pronto.'}
-        return render(request, 'contacto.html', contexto)
-    return render(request, 'contacto.html')
-##formulario de satisfaccion 
+
+def detalle_modulo(request, modulo_id):
+    """
+    Muestra los contenidos de un módulo y consulta el progreso del usuario.
+    """
+    modulo = get_object_or_404(Modulo, id=modulo_id)
+    contenidos = modulo.contenidos.all().order_by("orden")
+
+    progreso_modulo = None
+
+    # Si el usuario está autenticado, obtenemos o creamos el progreso del módulo
+    if request.user.is_authenticated:
+        progreso_modulo, _ = Progreso.objects.get_or_create(
+            usuario=request.user,
+            modulo=modulo
+        )
+
+    contexto = {
+        "modulo": modulo,
+        "contenidos": contenidos,
+        "progreso_modulo": progreso_modulo,
+    }
+    return render(request, "detalle_modulo.html", contexto)
+
+
+def ver_contenido(request, contenido_id):
+    """
+    Muestra un contenido individual, convierte enlaces de YouTube a embed
+    y actualiza el progreso del usuario.
+    """
+    contenido = get_object_or_404(Contenido, id=contenido_id)
+    modulo = contenido.modulo
+
+    # ==============================
+    #   CONVERTIR URL DE YOUTUBE
+    # ==============================
+    embed_url = None
+
+    if contenido.url_video:
+        url = contenido.url_video.strip()
+
+        # Caso típico: https://www.youtube.com/watch?v=xxxxx
+        if "youtube.com/watch" in url:
+            try:
+                video_id = url.split("v=")[-1].split("&")[0]
+                embed_url = f"https://www.youtube.com/embed/{video_id}"
+            except:
+                embed_url = None
+
+        # Caso corto: https://youtu.be/xxxxx
+        elif "youtu.be" in url:
+            try:
+                video_id = url.split("/")[-1].split("?")[0]
+                embed_url = f"https://www.youtube.com/embed/{video_id}"
+            except:
+                embed_url = None
+
+    # ==============================
+    #     PROGRESO DEL USUARIO
+    # ==============================
+    if request.user.is_authenticated:
+        progreso, _ = Progreso.objects.get_or_create(
+            usuario=request.user,
+            modulo=modulo
+        )
+        progreso.fecha_completado = timezone.now()
+        progreso.save()
+
+    contexto = {
+        "contenido": contenido,
+        "modulo": modulo,
+        "embed_url": embed_url,
+    }
+
+    return render(request, "contenido_detalle.html", contexto)
+# ===========================
+#         FEEDBACK
+# ===========================
 def feedback(request):
-    """Vista para quejas, reclamos y calificaciones"""
-    if request.method == 'POST':
-        # Procesar el formulario
-        tipo = request.POST.get('tipo')
-        nombre = request.POST.get('nombre')
-        email = request.POST.get('email')
-        asunto = request.POST.get('asunto')
-        mensaje = request.POST.get('mensaje')
-        calificacion = request.POST.get('calificacion')
-        
-        # Validar datos requeridos
+    """
+    Procesa sugerencias, reclamos, mensajes y calificaciones.
+    """
+    if request.method == "POST":
+        tipo = request.POST.get("tipo")
+        nombre = request.POST.get("nombre")
+        email = request.POST.get("email")
+        asunto = request.POST.get("asunto")
+        mensaje = request.POST.get("mensaje")
+        calificacion = request.POST.get("calificacion")
+
+        # Validación básica
         if not all([tipo, nombre, email, asunto, mensaje]):
-            messages.error(request, 'Por favor completa todos los campos obligatorios.')
-            return render(request, 'feedback.html')
-        
-        # Guardar en la base de datos
-        feedback_obj = Feedback(
+            messages.error(request, "Por favor completa todos los campos obligatorios.")
+            return render(request, "feedback.html")
+
+        Feedback.objects.create(
             tipo=tipo,
             nombre=nombre,
             email=email,
             asunto=asunto,
             mensaje=mensaje,
-            calificacion=calificacion if calificacion else None
+            calificacion=calificacion if calificacion else None,
         )
-        feedback_obj.save()
-        
-        # Mensaje de éxito
-        if tipo == 'calificacion':
-            messages.success(request, '¡Gracias por calificar nuestra aplicación!')
-        else:
-            messages.success(request, '¡Hemos recibido tu mensaje! Te contactaremos pronto.')
-        
-        return redirect('feedback')
-    
-    return render(request, 'feedback.html')
 
-def gracias_feedback(request):
-    """Página de agradecimiento después del feedback"""
-    return render(request, 'gracias_feedback.html')
+    return render(request, "feedback.html")

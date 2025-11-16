@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- ENCABEZADO DEL MÓDULO -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+
+            <h2 class="fw-bold mb-1">{{ modulo.titulo }}</h2>
+
+            {% if modulo.descripcion %}
+                <p class="text-muted mb-2">{{ modulo.descripcion }}</p>
+            {% endif %}
+
+            {% if progreso_modulo %}
+                {% if progreso_modulo.completado %}
+                    <span class="badge bg-success px-3 py-2">✔ Módulo completado</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark px-3 py-2">En progreso</span>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- CONTENIDOS DEL MÓDULO -->
+    <h4 class="fw-bold mb-3">Contenidos del módulo</h4>
+
+    {% if contenidos %}
+        <div class="list-group shadow-sm">
+
+            {% for c in contenidos %}
+                <a href="{% url 'ver_contenido' c.id %}"
+                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <strong class="d-block">{{ c.titulo }}</strong>
+                        {% if c.descripcion %}
+                            <small class="text-muted">{{ c.descripcion|truncatewords:20 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <span class="badge bg-primary">Ver →</span>
+                </a>
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+        <div class="alert alert-info">
+            Este módulo aún no tiene contenidos disponibles.
+        </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'aprende' %}" class="btn btn-outline-secondary">
+            ← Volver a módulos
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}
