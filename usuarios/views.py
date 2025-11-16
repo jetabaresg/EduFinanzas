@@ -29,3 +29,7 @@ def iniciar_sesion(request):
         form = LoginForm(request)
 
     return render(request, 'usuarios/login.html', {'form': form})
+
+def cerrar_sesion(request):
+    logout(request)
+    return redirect('home') 
