@@ -12,8 +12,8 @@
 
     <hr>
 
-    <!-- YouTube (sin error 153) -->
-    {% if embed_url %}
+    <!-- Tipo: Video (YouTube o URL externa) -->
+    {% if contenido.tipo == 'video' and embed_url %}
     <div class="ratio ratio-16x9 mb-4">
         <iframe 
             src="{{ embed_url }}" 
@@ -24,56 +24,116 @@
     </div>
     {% endif %}
 
-    <!-- Video subido -->
-    {% if contenido.video %}
-        <video class="w-100 mb-4 rounded shadow" controls>
-            <source src="{{ contenido.video.url }}">
-            Tu navegador no soporta videos HTML5.
-        </video>
-    {% endif %}
-
-    <!-- Imagen subida -->
-    {% if contenido.imagen %}
+    <!-- Tipo: Imagen -->
+    {% if contenido.tipo == 'imagen' and contenido.imagen %}
     <div class="text-center mb-4">
         <img src="{{ contenido.imagen.url }}" 
-             alt="Imagen adjunta" 
-             class="img-fluid rounded shadow">
+             alt="Imagen: {{ contenido.titulo }}" 
+             class="img-fluid rounded shadow" 
+             style="max-width: 800px;">
     </div>
     {% endif %}
 
-    <!-- Archivo adjunto -->
-    {% if contenido.archivo %}
-    <div class="mb-4 p-3 bg-light border rounded d-flex align-items-center">
-
-        {% with contenido.archivo.name|lower as file_name %}
-            {% if ".pdf" in file_name %}
-                <i class="bi bi-file-earmark-pdf text-danger fs-3 me-3"></i>
-            {% elif ".doc" in file_name or ".docx" in file_name %}
-                <i class="bi bi-file-earmark-word text-primary fs-3 me-3"></i>
-            {% elif ".xls" in file_name or ".xlsx" in file_name %}
-                <i class="bi bi-file-earmark-excel text-success fs-3 me-3"></i>
-            {% elif ".png" in file_name or ".jpg" in file_name or ".jpeg" in file_name %}
-                <i class="bi bi-file-earmark-image text-info fs-3 me-3"></i>
-            {% else %}
-                <i class="bi bi-file-earmark fs-3 me-3"></i>
-            {% endif %}
-        {% endwith %}
-
-        <div>
-            <strong>Archivo adjunto:</strong><br>
-            <a href="{{ contenido.archivo.url }}" target="_blank" 
-               class="btn btn-outline-primary btn-sm mt-2">
-                📄 Abrir / Descargar
-            </a>
+    <!-- Tipo: PDF o archivo -->
+    {% if contenido.tipo == 'pdf' and contenido.archivo %}
+    <div class="mb-4 p-4 bg-light border rounded">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-file-earmark-pdf text-danger fs-2 me-3"></i>
+            <div>
+                <strong>Documento PDF:</strong><br>
+                <a href="{{ contenido.archivo.url }}" target="_blank" 
+                   class="btn btn-danger btn-sm mt-2">
+                    📥 Abrir / Descargar PDF
+                </a>
+            </div>
         </div>
-
     </div>
     {% endif %}
 
-    <!-- Texto -->
-    <div class="mb-4">
-        {{ contenido.texto|safe }}
+    <!-- Tipo: Texto / Explicación -->
+    {% if contenido.tipo == 'texto' %}
+    <div class="mb-4 p-4 border-left border-primary rounded" style="border-left: 4px solid #0d6efd;">
+        <p class="lead">{{ contenido.descripcion|safe }}</p>
     </div>
+    {% endif %}
+
+    <!-- Tipo: Quiz / Evaluación -->
+    {% if contenido.tipo == 'quiz' and preguntas %}
+    <div class="mb-4">
+        <h3 class="fw-bold mb-3">📋 Evaluación</h3>
+        
+        {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'procesar_evaluacion' contenido.id %}" class="bg-light p-4 rounded">
+            {% csrf_token %}
+            
+            {% for pregunta in preguntas %}
+            <div class="mb-4 p-3 bg-white rounded border">
+                <h5 class="fw-bold">Pregunta {{ forloop.counter }}: {{ pregunta.texto }}</h5>
+                
+                <div class="mt-3">
+                    {% for opcion in pregunta.opciones.all %}
+                    <div class="form-check">
+                        <input 
+                            class="form-check-input" 
+                            type="radio" 
+                            name="pregunta_{{ pregunta.id }}" 
+                            id="opcion_{{ opcion.id }}"
+                            value="{{ opcion.id }}"
+                            required>
+                        <label class="form-check-label" for="opcion_{{ opcion.id }}">
+                            {{ opcion.texto }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn btn-success btn-lg w-100">
+                ✓ Enviar Evaluación
+            </button>
+        </form>
+        {% else %}
+        <div class="alert alert-info">
+            <strong>⚠️ Debes iniciar sesión:</strong> Para hacer la evaluación necesitas 
+            <a href="{% url 'login' %}" class="alert-link">iniciar sesión</a> primero.
+        </div>
+        
+        <div class="bg-light p-4 rounded">
+            {% for pregunta in preguntas %}
+            <div class="mb-4 p-3 bg-white rounded border">
+                <h5 class="fw-bold">Pregunta {{ forloop.counter }}: {{ pregunta.texto }}</h5>
+                
+                <div class="mt-3">
+                    {% for opcion in pregunta.opciones.all %}
+                    <div class="form-check">
+                        <input 
+                            class="form-check-input" 
+                            type="radio" 
+                            disabled>
+                        <label class="form-check-label">
+                            {{ opcion.texto }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% elif contenido.tipo == 'quiz' and not preguntas %}
+    <div class="alert alert-warning">
+        <strong>⚠️ Sin preguntas aún:</strong> Esta evaluación aún no tiene preguntas disponibles.
+    </div>
+    {% endif %}
+
+    <!-- Si no hay contenido específico del tipo -->
+    {% if not contenido.tipo|add:":text" and not embed_url and not contenido.archivo and not contenido.imagen %}
+    <div class="alert alert-info">
+        <strong>Contenido en desarrollo:</strong> Este contenido aún no tiene detalles disponibles. Vuelve pronto.
+    </div>
+    {% endif %}
 
     <a href="{% url 'detalle_modulo' contenido.modulo.id %}" class="btn btn-secondary">
         ← Volver al módulo
