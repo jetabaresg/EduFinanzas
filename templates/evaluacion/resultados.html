@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Resultados - {{ contenido.titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Tarjeta de resultados -->
+        <div class="card">
+            <div class="card-header {% if aprobado %}bg-success{% else %}bg-danger{% endif %} text-white text-center py-4">
+                <h2 class="mb-2">
+                    {% if aprobado %}Felicidades{% else %}Sigue practicando{% endif %}
+                </h2>
+                <h1 class="display-4 fw-bold">{{ porcentaje|floatformat:0 }}%</h1>
+                <p class="mb-0">{{ respuestas_correctas }} de {{ total_preguntas }} respuestas correctas</p>
+            </div>
+            
+            <div class="card-body p-4">
+                <!-- Barra de progreso -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tu puntaje:</span>
+                        <span><strong>{{ puntaje_obtenido }}/{{ puntaje_maximo }}</strong> puntos</span>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar {% if aprobado %}bg-success{% else %}bg-danger{% endif %}" 
+                            role="progressbar" 
+                            aria-valuenow="{{ porcentaje }}" 
+                            aria-valuemin="0" 
+                            aria-valuemax="100">
+                            {{ porcentaje|floatformat:0 }}%
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <!-- Estado de aprobacion -->
+                <div class="alert {% if aprobado %}alert-success{% else %}alert-warning{% endif %} mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="alert-heading">
+                                {% if aprobado %}
+                                Modulo completado
+                                {% else %}
+                                Modulo pendiente
+                                {% endif %}
+                            </h5>
+                            <p class="mb-0">
+                                {% if aprobado %}
+                                Has aprobado la evaluacion y completado el modulo <strong>{{ modulo.titulo }}</strong>.
+                                {% else %}
+                                Necesitas al menos 70% para aprobar. Puedes intentarlo nuevamente.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles del intento -->
+                <div class="row text-center mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h3 class="text-primary">{{ respuestas_correctas }}</h3>
+                                <small class="text-muted">Correctas</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h3 class="text-warning">{{ total_preguntas|add:"-1" }}</h3>
+                                <small class="text-muted">Incorrectas</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h3 class="text-info">{{ intento.puntaje_maximo }}</h3>
+                                <small class="text-muted">Puntos max</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de accion -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{% url 'detalle_modulo' modulo.id %}" class="btn btn-outline-primary me-md-2">
+                        Volver al modulo
+                    </a>
+                    {% if not aprobado %}
+                    <a href="{% url 'iniciar_evaluacion' contenido.id %}" class="btn btn-primary">
+                        Intentar nuevamente
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'ver_progreso' %}" class="btn btn-success ms-md-2">
+                        Ver mi progreso
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-footer text-muted text-center">
+                <small>Evaluacion presentada el {{ intento.fecha_fin|date:"d/m/Y H:i" }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

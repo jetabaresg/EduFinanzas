@@ -107,3 +107,70 @@ class Progreso(models.Model):
     def __str__(self):
         estado = "Completado" if self.completado else "Pendiente"
         return f"{self.usuario.username} - {self.modulo.titulo}: {estado}"
+
+class Pregunta(models.Model):
+    TIPO_CHOICES = [
+        ('opcion_multiple', 'Opción Múltiple'),
+        ('verdadero_falso', 'Verdadero/Falso'),
+    ]
+    
+    contenido = models.ForeignKey(Contenido, on_delete=models.CASCADE, related_name="preguntas")
+    texto = models.TextField(verbose_name="Texto de la pregunta")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='opcion_multiple')
+    orden = models.PositiveIntegerField(default=1)
+    puntos = models.PositiveIntegerField(default=1, verbose_name="Puntos por respuesta correcta")
+    
+    class Meta:
+        ordering = ['orden']
+        verbose_name = "Pregunta"
+        verbose_name_plural = "Preguntas"
+    
+    def __str__(self):
+        return f"{self.contenido.titulo} - Pregunta {self.orden}"
+
+
+class OpcionRespuesta(models.Model):
+    pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE, related_name="opciones")
+    texto = models.CharField(max_length=500, verbose_name="Texto de la opción")
+    es_correcta = models.BooleanField(default=False, verbose_name="¿Es correcta?")
+    orden = models.PositiveIntegerField(default=1)
+    
+    class Meta:
+        ordering = ['orden']
+        verbose_name = "Opción de Respuesta"
+        verbose_name_plural = "Opciones de Respuesta"
+    
+    def __str__(self):
+        return f"{self.pregunta.texto[:50]}... - Opción {self.orden}"
+
+
+class IntentoEvaluacion(models.Model):
+    usuario = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    contenido = models.ForeignKey(Contenido, on_delete=models.CASCADE)
+    fecha_inicio = models.DateTimeField(auto_now_add=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+    completado = models.BooleanField(default=False)
+    puntaje_obtenido = models.FloatField(default=0)
+    puntaje_maximo = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        verbose_name = "Intento de Evaluación"
+        verbose_name_plural = "Intentos de Evaluación"
+    
+    def __str__(self):
+        estado = "Completado" if self.completado else "En progreso"
+        return f"{self.usuario.username} - {self.contenido.titulo} - {estado}"
+
+
+class RespuestaUsuario(models.Model):
+    intento = models.ForeignKey(IntentoEvaluacion, on_delete=models.CASCADE, related_name="respuestas")
+    pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE)
+    opcion_seleccionada = models.ForeignKey(OpcionRespuesta, on_delete=models.CASCADE, null=True, blank=True)
+    es_correcta = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = "Respuesta del Usuario"
+        verbose_name_plural = "Respuestas de Usuarios"
+    
+    def __str__(self):
+        return f"{self.intento.usuario.username} - {self.pregunta.texto[:30]}..."

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Evaluación - {{ contenido.titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Header de la evaluación -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">{{ contenido.titulo }}</h4>
+                <small>{{ contenido.modulo.titulo }}</small>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6>Instrucciones:</h6>
+                    <ul class="mb-0">
+                        <li>Responde todas las preguntas antes de enviar</li>
+                        <li>Cada pregunta tiene una única respuesta correcta</li>
+                        <li>Necesitas al menos 70% para aprobar</li>
+                        <li>Puedes abandonar la evaluación en cualquier momento</li>
+                    </ul>
+                </div>
+                
+                {% if progreso_modulo and progreso_modulo.completado %}
+                <div class="alert alert-warning">
+                    <strong>Ya completaste este módulo.</strong> Puedes presentar la evaluación nuevamente para mejorar tu puntaje.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Formulario de evaluación -->
+        <form method="post" action="{% url 'procesar_evaluacion' contenido.id %}">
+            {% csrf_token %}
+            
+            {% for pregunta in preguntas %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Pregunta {{ forloop.counter }}</h5>
+                    <small>{{ pregunta.puntos }} punto{{ pregunta.puntos|pluralize }}</small>
+                </div>
+                <div class="card-body">
+                    <p class="fw-bold">{{ pregunta.texto }}</p>
+                    <div class="list-group list-group-flush">
+                        {% for opcion in pregunta.opciones.all %}
+                        <label class="list-group-item list-group-item-action">
+                            <input class="form-check-input me-2" 
+                                   type="radio" 
+                                   name="pregunta_{{ pregunta.id }}" 
+                                   value="{{ opcion.id }}" 
+                                   required>
+                            {{ opcion.texto }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Botones de acción -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'abandonar_evaluacion' intento.id %}" 
+                           class="btn btn-outline-danger"
+                           onclick="return confirm('¿Estás seguro de que quieres abandonar la evaluación? Se guardará como intento fallido.')">
+                            Abandonar evaluación
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            Enviar evaluación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

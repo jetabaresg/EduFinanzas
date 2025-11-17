@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Progreso{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">Mi Progreso de Aprendizaje</h1>
+            <span class="badge bg-primary fs-6">{{ modulos_completados }}/{{ total_modulos }} módulos</span>
+        </div>
+
+        <!-- Resumen general -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h2 class="text-primary">{{ total_modulos }}</h2>
+                                <small class="text-muted">Módulos Totales</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h2 class="text-success">{{ modulos_completados }}</h2>
+                                <small class="text-muted">Completados</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <!-- CORREGIDO: Calcular módulos pendientes correctamente -->
+                                <h2 class="text-warning">{{ total_modulos|add:"-"|add:modulos_completados }}</h2>
+                                <small class="text-muted">Pendientes</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h2 class="text-info">{{ porcentaje_completado|floatformat:0 }}%</h2>
+                                <small class="text-muted">Progreso Total</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de progreso general - CORREGIDO -->
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Progreso general:</span>
+                        <span><strong>{{ porcentaje_completado|floatformat:1 }}%</strong></span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success"
+                            role="progressbar"
+                            data-width="{{ porcentaje_completado|default_if_none:'0'|floatformat:0|cut:','|cut:'.' }}"
+                            aria-valuemin="0"
+                            aria-valuemax="100">
+                            {{ porcentaje_completado|floatformat:0 }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de módulos -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Mis Módulos</h5>
+            </div>
+            <div class="card-body p-0">
+                {% for progreso in modulos_progreso %}
+                <div class="border-bottom p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ progreso.modulo.titulo }}</h6>
+                            <p class="text-muted small mb-0">{{ progreso.modulo.descripcion|truncatewords:20 }}</p>
+                            
+                            {% if progreso.completado %}
+                            <small class="text-success">
+                                {% if progreso.fecha_completado %}
+                                    Completado el {{ progreso.fecha_completado|date:"d/m/Y" }}
+                                {% else %}
+                                    Completado
+                                {% endif %}
+                            </small>
+                            {% else %}
+                            <small class="text-warning">
+                                En progreso
+                            </small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-end">
+                            {% if progreso.completado %}
+                            <span class="badge bg-success">Completado</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Pendiente</span>
+                            {% endif %}
+                            
+                            <div class="mt-2">
+                                <a href="{% url 'detalle_modulo' progreso.modulo.id %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    {% if progreso.completado %}Revisar{% else %}Continuar{% endif %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    {% if user.is_authenticated %}
+                    <p class="text-muted">No tienes progreso registrado aún.</p>
+                    {% else %}
+                    <p class="text-muted">Inicia sesión para ver tu progreso.</p>
+                    {% endif %}
+                    <a href="{% url 'aprende' %}" class="btn btn-primary">Comenzar a aprender</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Historial de evaluaciones -->
+        {% if intentos %}
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Historial de Evaluaciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Evaluación</th>
+                                <th>Fecha</th>
+                                <th>Puntaje</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for intento in intentos %}
+                            <tr>
+                                <td>
+                                    <strong>{{ intento.contenido.titulo }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ intento.contenido.modulo.titulo }}</small>
+                                </td>
+                                <td>
+                                    {% if intento.fecha_fin %}
+                                        {{ intento.fecha_fin|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        En progreso
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge {% if intento.puntaje_obtenido >= intento.puntaje_maximo %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                        {{ intento.puntaje_obtenido }}/{{ intento.puntaje_maximo }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if intento.completado %}
+                                        {% if intento.puntaje_obtenido >= intento.puntaje_maximo %}
+                                        <span class="badge bg-success">Aprobado</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Reprobado</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">En progreso</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Mensaje cuando no hay evaluaciones -->
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <p class="text-muted mb-0">No hay evaluaciones completadas aún.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+        <script>
+            // Apply progress widths from data-width attribute to avoid template tags inside CSS
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('.progress .progress-bar').forEach(function (el) {
+                    var w = el.getAttribute('data-width') || '0';
+                    // Keep only digits
+                    w = ('' + w).replace(/[^0-9]/g, '') || '0';
+                    el.style.width = w + '%';
+                    el.setAttribute('aria-valuenow', w);
+                });
+            });
+        </script>
+    {% endblock %}
