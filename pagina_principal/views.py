@@ -22,9 +22,28 @@ def acerca(request):
 # ===========================
 def aprende(request):
     """
-    Muestra todos los módulos publicados.
+    Muestra todos los módulos publicados con su progreso.
     """
     modulos = Modulo.objects.filter(publicado=True).order_by("orden")
+    
+    # Si el usuario está autenticado, agregar información de progreso
+    if request.user.is_authenticated:
+        for modulo in modulos:
+            # Un módulo se considera completado SOLO si pasó la evaluación (≥ 70%)
+            progreso = Progreso.objects.filter(
+                usuario=request.user,
+                modulo=modulo,
+                completado=True
+            ).first()
+            
+            # Agregar datos al módulo
+            modulo.progreso_usuario = progreso
+            modulo.completado = progreso and progreso.completado
+    else:
+        # Usuario no autenticado
+        for modulo in modulos:
+            modulo.progreso_usuario = None
+            modulo.completado = False
 
     contexto = {
         "mensaje": "Selecciona un módulo y empieza a aprender:",
@@ -60,7 +79,7 @@ def detalle_modulo(request, modulo_id):
 def ver_contenido(request, contenido_id):
     """
     Muestra un contenido individual, convierte enlaces de YouTube a embed
-    y actualiza el progreso del usuario.
+    y actualiza el progreso del usuario automáticamente.
     """
     contenido = get_object_or_404(Contenido, id=contenido_id)
     modulo = contenido.modulo
@@ -90,9 +109,17 @@ def ver_contenido(request, contenido_id):
                 embed_url = None
 
     # ==============================
-    #     PROGRESO DEL USUARIO
+    #     PREGUNTAS DEL QUIZ
+    # ==============================
+    preguntas = None
+    if contenido.tipo == 'quiz':
+        preguntas = contenido.preguntas.all().order_by('orden')
+
+    # ==============================
+    #     PROGRESO AUTOMÁTICO
     # ==============================
     if request.user.is_authenticated:
+        # Actualizar progreso del módulo (marcar con fecha de acceso)
         progreso, _ = Progreso.objects.get_or_create(
             usuario=request.user,
             modulo=modulo
@@ -104,6 +131,7 @@ def ver_contenido(request, contenido_id):
         "contenido": contenido,
         "modulo": modulo,
         "embed_url": embed_url,
+        "preguntas": preguntas,
     }
 
     return render(request, "contenido_detalle.html", contexto)
@@ -138,51 +166,25 @@ def feedback(request):
 
     return render(request, "feedback.html")
 
-##sistema de evaluación 
-def iniciar_evaluacion(request, contenido_id):
-    """
-    CU-05: Presentar evaluación del módulo
-    Carga las preguntas de un contenido tipo 'quiz'
-    """
-    contenido = get_object_or_404(Contenido, id=contenido_id, tipo='quiz')
-    
-    # Verificar si el usuario ya completó el módulo
-    modulo = contenido.modulo
-    progreso_modulo, _ = Progreso.objects.get_or_create(
-        usuario=request.user,
-        modulo=modulo
-    )
-    
-    # Crear o recuperar intento actual
-    intento, created = IntentoEvaluacion.objects.get_or_create(
-        usuario=request.user,
-        contenido=contenido,
-        completado=False,
-        defaults={'puntaje_maximo': contenido.preguntas.count()}
-    )
-    
-    preguntas = contenido.preguntas.all().order_by('orden')
-    
-    contexto = {
-        'contenido': contenido,
-        'modulo': modulo,
-        'preguntas': preguntas,
-        'intento': intento,
-        'progreso_modulo': progreso_modulo,
-    }
-    return render(request, 'evaluacion/evaluacion.html', contexto)
 
 def procesar_evaluacion(request, contenido_id):
     """
     Procesa las respuestas y calcula el puntaje
     """
+    # Verificar que el usuario está autenticado
+    if not request.user.is_authenticated:
+        messages.error(request, "Debes iniciar sesión para hacer evaluaciones.")
+        return redirect('login')
+    
     if request.method == 'POST':
         contenido = get_object_or_404(Contenido, id=contenido_id, tipo='quiz')
-        intento = get_object_or_404(
-            IntentoEvaluacion, 
-            usuario=request.user, 
-            contenido=contenido, 
-            completado=False
+        
+        # Crear o recuperar intento (crear si no existe)
+        intento, created = IntentoEvaluacion.objects.get_or_create(
+            usuario=request.user,
+            contenido=contenido,
+            completado=False,
+            defaults={'puntaje_maximo': contenido.preguntas.count()}
         )
         
         puntaje_total = 0
@@ -220,32 +222,35 @@ def procesar_evaluacion(request, contenido_id):
         intento.fecha_fin = timezone.now()
         intento.save()
         
-        # Actualizar progreso del módulo si aprobó (más del 70%)
-        porcentaje = (puntaje_total / intento.puntaje_maximo) * 100 if intento.puntaje_maximo > 0 else 0
+        # Marcar módulo como completado si se aprobó
+        modulo = contenido.modulo
+        progreso, _ = Progreso.objects.get_or_create(
+            usuario=request.user,
+            modulo=modulo
+        )
+        
+        # Aprobar si obtiene 70% o más
+        porcentaje = (puntaje_total / (total_preguntas * 1)) * 100 if total_preguntas > 0 else 0
         if porcentaje >= 70:
-            progreso, _ = Progreso.objects.get_or_create(
-                usuario=request.user,
-                modulo=contenido.modulo
-            )
             progreso.completado = True
             progreso.fecha_completado = timezone.now()
             progreso.save()
         
         contexto = {
             'contenido': contenido,
-            'modulo': contenido.modulo,
-            'intento': intento,
+            'modulo': modulo,
             'puntaje_obtenido': puntaje_total,
-            'puntaje_maximo': intento.puntaje_maximo,
-            'porcentaje': porcentaje,
+            'puntaje_maximo': total_preguntas,
             'respuestas_correctas': respuestas_correctas,
             'total_preguntas': total_preguntas,
+            'porcentaje': porcentaje,
             'aprobado': porcentaje >= 70,
         }
         
         return render(request, 'evaluacion/resultados.html', contexto)
     
     return redirect('detalle_modulo', modulo_id=contenido.modulo.id)
+
 
 def ver_progreso(request):
 

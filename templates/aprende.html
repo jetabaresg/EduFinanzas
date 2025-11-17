@@ -63,9 +63,17 @@
 
                     <!-- PROGRESO -->
                     <div class="mod-progress mt-2">
-                        {% with total=modulo.contenidos.count completados=modulo.contenidos_completados %}
-                            {{ completados }}/{{ total }} completado
-                        {% endwith %}
+                        {% if user.is_authenticated %}
+                            {% with total=modulo.contenidos.count completados=modulo.contenidos_completados %}
+                                {% if modulo.completado %}
+                                    <span class="badge bg-success">✓ Completado</span>
+                                {% else %}
+                                    <span class="badge bg-primary">Evaluación pendiente</span>
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            <span class="text-muted small">Inicia sesión para ver progreso</span>
+                        {% endif %}
                     </div>
 
                 </div>
