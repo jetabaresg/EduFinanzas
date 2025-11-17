@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-
-from .models import Modulo, Contenido, Feedback, Progreso
+from django.http import JsonResponse
+from .models import Modulo, Contenido, Feedback, Progreso,Pregunta, OpcionRespuesta, IntentoEvaluacion, RespuestaUsuario
 
 
 # ===========================
@@ -136,3 +137,156 @@ def feedback(request):
         )
 
     return render(request, "feedback.html")
+
+##sistema de evaluación 
+def iniciar_evaluacion(request, contenido_id):
+    """
+    CU-05: Presentar evaluación del módulo
+    Carga las preguntas de un contenido tipo 'quiz'
+    """
+    contenido = get_object_or_404(Contenido, id=contenido_id, tipo='quiz')
+    
+    # Verificar si el usuario ya completó el módulo
+    modulo = contenido.modulo
+    progreso_modulo, _ = Progreso.objects.get_or_create(
+        usuario=request.user,
+        modulo=modulo
+    )
+    
+    # Crear o recuperar intento actual
+    intento, created = IntentoEvaluacion.objects.get_or_create(
+        usuario=request.user,
+        contenido=contenido,
+        completado=False,
+        defaults={'puntaje_maximo': contenido.preguntas.count()}
+    )
+    
+    preguntas = contenido.preguntas.all().order_by('orden')
+    
+    contexto = {
+        'contenido': contenido,
+        'modulo': modulo,
+        'preguntas': preguntas,
+        'intento': intento,
+        'progreso_modulo': progreso_modulo,
+    }
+    return render(request, 'evaluacion/evaluacion.html', contexto)
+
+def procesar_evaluacion(request, contenido_id):
+    """
+    Procesa las respuestas y calcula el puntaje
+    """
+    if request.method == 'POST':
+        contenido = get_object_or_404(Contenido, id=contenido_id, tipo='quiz')
+        intento = get_object_or_404(
+            IntentoEvaluacion, 
+            usuario=request.user, 
+            contenido=contenido, 
+            completado=False
+        )
+        
+        puntaje_total = 0
+        respuestas_correctas = 0
+        total_preguntas = contenido.preguntas.count()
+        
+        # Procesar cada pregunta
+        for pregunta in contenido.preguntas.all():
+            opcion_id = request.POST.get(f'pregunta_{pregunta.id}')
+            
+            if opcion_id:
+                try:
+                    opcion_seleccionada = OpcionRespuesta.objects.get(id=opcion_id)
+                    es_correcta = opcion_seleccionada.es_correcta
+                    
+                    # Guardar respuesta del usuario
+                    RespuestaUsuario.objects.create(
+                        intento=intento,
+                        pregunta=pregunta,
+                        opcion_seleccionada=opcion_seleccionada,
+                        es_correcta=es_correcta
+                    )
+                    
+                    if es_correcta:
+                        puntaje_total += pregunta.puntos
+                        respuestas_correctas += 1
+                        
+                except OpcionRespuesta.DoesNotExist:
+                    # Opción no válida
+                    pass
+        
+        # Actualizar intento
+        intento.puntaje_obtenido = puntaje_total
+        intento.completado = True
+        intento.fecha_fin = timezone.now()
+        intento.save()
+        
+        # Actualizar progreso del módulo si aprobó (más del 70%)
+        porcentaje = (puntaje_total / intento.puntaje_maximo) * 100 if intento.puntaje_maximo > 0 else 0
+        if porcentaje >= 70:
+            progreso, _ = Progreso.objects.get_or_create(
+                usuario=request.user,
+                modulo=contenido.modulo
+            )
+            progreso.completado = True
+            progreso.fecha_completado = timezone.now()
+            progreso.save()
+        
+        contexto = {
+            'contenido': contenido,
+            'modulo': contenido.modulo,
+            'intento': intento,
+            'puntaje_obtenido': puntaje_total,
+            'puntaje_maximo': intento.puntaje_maximo,
+            'porcentaje': porcentaje,
+            'respuestas_correctas': respuestas_correctas,
+            'total_preguntas': total_preguntas,
+            'aprobado': porcentaje >= 70,
+        }
+        
+        return render(request, 'evaluacion/resultados.html', contexto)
+    
+    return redirect('detalle_modulo', modulo_id=contenido.modulo.id)
+
+def ver_progreso(request):
+
+    # Para usuarios autenticados, mostrar sus datos reales
+    if request.user.is_authenticated:
+        modulos_progreso = Progreso.objects.filter(usuario=request.user).select_related('modulo')
+        total_modulos = Modulo.objects.filter(publicado=True).count()
+        modulos_completados = modulos_progreso.filter(completado=True).count()
+        intentos = IntentoEvaluacion.objects.filter(usuario=request.user, completado=True)
+        modulos_pendientes = total_modulos - modulos_completados
+    else:
+        # Para usuarios no autenticados, mostrar datos de ejemplo o vacíos
+        modulos = Modulo.objects.filter(publicado=True)
+        total_modulos = modulos.count()
+        modulos_completados = 0
+        modulos_pendientes = total_modulos
+        modulos_progreso = []
+        intentos = []
+    
+    contexto = {
+        'modulos_progreso': modulos_progreso,
+        'total_modulos': total_modulos,
+        'modulos_completados': modulos_completados,
+        'modulos_pendientes': modulos_pendientes,
+        'intentos': intentos,
+        'porcentaje_completado': (modulos_completados / total_modulos * 100) if total_modulos > 0 else 0,
+    }
+    
+    return render(request, 'evaluacion/progreso.html', contexto)
+
+def abandonar_evaluacion(request, intento_id):
+    """
+    Flujo alternativo: Usuario abandona la evaluación
+    """
+    intento = get_object_or_404(IntentoEvaluacion, id=intento_id, usuario=request.user)
+    
+    # Marcar como completado pero con puntaje 0
+    intento.completado = True
+    intento.fecha_fin = timezone.now()
+    intento.puntaje_obtenido = 0
+    intento.save()
+    
+    messages.info(request, "Has abandonado la evaluación. Puedes intentarlo nuevamente cuando quieras.")
+    return redirect('detalle_modulo', modulo_id=intento.contenido.modulo.id)
