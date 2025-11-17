@@ -23,7 +23,7 @@
     <li>Generación de reportes </li>
 </ul>
 
-<h3><strong>Evaluaciones (Próximamente)</strong></h3>
+<h3><strong>Evaluaciones</strong></h3>
 <ul>
     <li>Preguntas por módulo</li>
     <li>Calificación automática</li>
@@ -77,6 +77,7 @@
         <td>Visualiza recursos del módulo seleccionado.</td>
     </tr>
     <tr><td><strong>CU-06</strong></td><td>Consultar progreso</td><td>Usuario</td><td>Consulta su avance y resultados.</td></tr>
+    <tr><td><strong>CU-05</strong></td><td>Presentar evaluación</td><td>Usuario</td><td>Responde y envía la evaluación del módulo.</td></tr>
 </table>
 
 <h3><strong>Pendientes</strong></h3>
@@ -88,7 +89,6 @@
         <th>Descripción</th>
     </tr>
     <tr><td><strong>CU-03</strong></td><td>Simulaciones financieras</td><td>Usuario registrado</td><td>Ejecuta ejercicios sobre ahorro, gasto o inversión.</td></tr>
-    <tr><td><strong>CU-05</strong></td><td>Presentar evaluación</td><td>Usuario</td><td>Responde y envía la evaluación del módulo.</td></tr>
     <tr><td><strong>CU-07</strong></td><td>Recibir notificaciones</td><td>Usuario</td><td>Recibe alertas sobre actividades pendientes.</td></tr>
     <tr><td><strong>CU-08</strong></td><td>Sincronizar progreso</td><td>Usuario</td><td>Guarda avances entre dispositivos.</td></tr>
     <tr><td><strong>CU-09</strong></td><td>Administrar contenido</td><td>Administrador</td><td>Crear, editar y eliminar módulos.</td></tr>
