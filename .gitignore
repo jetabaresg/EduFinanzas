@@ -20,3 +20,16 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+
+__pycache__/
+*.pyc
+
+# Base de datos local
+db.sqlite3
+
+# Entorno virtual
+venv/
+
+# Archivos temporales
+*.log
