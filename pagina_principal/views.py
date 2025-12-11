@@ -1,7 +1,9 @@
+import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.db.models import Avg
 from django.http import JsonResponse
 from .models import Modulo, Contenido, Feedback, Progreso,Pregunta, OpcionRespuesta, IntentoEvaluacion, RespuestaUsuario
 
@@ -218,6 +220,7 @@ def procesar_evaluacion(request, contenido_id):
         
         # Actualizar intento
         intento.puntaje_obtenido = puntaje_total
+        intento.puntaje_maximo = total_preguntas
         intento.completado = True
         intento.fecha_fin = timezone.now()
         intento.save()
@@ -239,6 +242,7 @@ def procesar_evaluacion(request, contenido_id):
         contexto = {
             'contenido': contenido,
             'modulo': modulo,
+            'intento': intento,
             'puntaje_obtenido': puntaje_total,
             'puntaje_maximo': total_preguntas,
             'respuestas_correctas': respuestas_correctas,
@@ -295,3 +299,98 @@ def abandonar_evaluacion(request, intento_id):
     
     messages.info(request, "Has abandonado la evaluación. Puedes intentarlo nuevamente cuando quieras.")
     return redirect('detalle_modulo', modulo_id=intento.contenido.modulo.id)
+
+
+@login_required
+def estadisticas(request):
+    """Vista de métricas de uso y desempeño del usuario."""
+    usuario = request.user
+
+    # Módulos publicados
+    modulos = list(Modulo.objects.filter(publicado=True).order_by("orden"))
+    progreso_por_modulo = {
+        p.modulo_id: p for p in Progreso.objects.filter(usuario=usuario, modulo__in=modulos)
+    }
+
+    # Marcar en cada módulo si el usuario tiene progreso/completado
+    for modulo in modulos:
+        progreso = progreso_por_modulo.get(modulo.id)
+        modulo.progreso_usuario = progreso
+        modulo.completado = bool(progreso and progreso.completado)
+
+    total_modulos = len(modulos)
+    modulos_completados = sum(
+        1 for m in modulos if m.completado
+    )
+    modulos_pendientes = total_modulos - modulos_completados
+
+    # Intentos de evaluaciones completados
+    intentos = list(
+        IntentoEvaluacion.objects.filter(usuario=usuario, completado=True)
+        .select_related("contenido", "contenido__modulo")
+        .order_by("-fecha_fin")
+    )
+
+    def porcentaje(intento: IntentoEvaluacion) -> float:
+        maximo = intento.puntaje_maximo or 1
+        return round((intento.puntaje_obtenido / maximo) * 100, 2)
+
+    porcentajes = [porcentaje(i) for i in intentos]
+    promedio_general = round(sum(porcentajes) / len(porcentajes), 2) if porcentajes else 0
+    mejor_puntaje = max(porcentajes) if porcentajes else 0
+
+    # Datos por módulo
+    labels_modulos = []
+    data_completados = []
+    data_promedios = []
+    for modulo in modulos:
+        labels_modulos.append(modulo.titulo)
+        data_completados.append(1 if progreso_por_modulo.get(modulo.id) and progreso_por_modulo[modulo.id].completado else 0)
+
+        intentos_modulo = [i for i in intentos if i.contenido.modulo_id == modulo.id]
+        if intentos_modulo:
+            prom = sum(porcentaje(i) for i in intentos_modulo) / len(intentos_modulo)
+        else:
+            prom = 0
+        data_promedios.append(round(prom, 2))
+
+    # Últimos intentos para línea de tiempo
+    ultimos = list(reversed(intentos[-8:]))  # últimos 8, en orden cronológico
+    timeline_labels = [
+        (i.fecha_fin or i.fecha_inicio).strftime("%d/%m") if (i.fecha_fin or i.fecha_inicio) else "-"
+        for i in ultimos
+    ]
+    timeline_scores = [porcentaje(i) for i in ultimos]
+
+    chart_payload = {
+        "modulos": {
+            "labels": labels_modulos,
+            "completados": data_completados,
+            "promedios": data_promedios,
+        },
+        "timeline": {
+            "labels": timeline_labels,
+            "scores": timeline_scores,
+        },
+        "resumen": {
+            "total_modulos": total_modulos,
+            "modulos_completados": modulos_completados,
+            "modulos_pendientes": modulos_pendientes,
+            "promedio_general": promedio_general,
+            "mejor_puntaje": mejor_puntaje,
+            "total_intentos": len(intentos),
+        },
+    }
+
+    contexto = {
+        "stats_json": json.dumps(chart_payload, ensure_ascii=False),
+        "total_modulos": total_modulos,
+        "modulos_completados": modulos_completados,
+        "modulos_pendientes": modulos_pendientes,
+        "promedio_general": promedio_general,
+        "mejor_puntaje": mejor_puntaje,
+        "total_intentos": len(intentos),
+        "modulos": modulos,
+    }
+
+    return render(request, "estadisticas.html", contexto)
