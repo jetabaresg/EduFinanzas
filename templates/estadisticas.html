@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="section-title">Estadísticas de uso y evaluaciones</h2>
+        <p class="text-muted">Aquí puedes ver un resumen de tu avance en los módulos y el desempeño en las evaluaciones.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Módulos totales</h6>
+                <h3 class="fw-bold mb-0">{{ total_modulos }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Módulos completados</h6>
+                <h3 class="fw-bold text-success mb-0">{{ modulos_completados }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Módulos pendientes</h6>
+                <h3 class="fw-bold text-warning mb-0">{{ modulos_pendientes }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Intentos de evaluación</h6>
+                <h3 class="fw-bold mb-0">{{ total_intentos }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Desempeño general</h5>
+                <p class="mb-1"><strong>Promedio general:</strong> {{ promedio_general }}%</p>
+                <p class="mb-0"><strong>Mejor puntaje:</strong> {{ mejor_puntaje }}%</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Detalle por módulo</h5>
+                {% if modulos %}
+                    <ul class="list-group list-group-flush">
+                        {% for modulo in modulos %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ modulo.titulo }}</span>
+                                {% if modulo.progreso_usuario and modulo.progreso_usuario.completado %}
+                                    <span class="badge bg-success">Completado</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Pendiente</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">Aún no hay módulos disponibles.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Progreso por módulo</h5>
+                <canvas id="modulosChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Evolución de puntajes</h5>
+                <canvas id="timelineChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function () {
+        const payload = {{ stats_json|safe }};
+
+        // Gráfico de módulos (barras de completado y promedio)
+        const ctxModulos = document.getElementById('modulosChart');
+        if (ctxModulos && payload.modulos.labels.length) {
+            new Chart(ctxModulos, {
+                type: 'bar',
+                data: {
+                    labels: payload.modulos.labels,
+                    datasets: [
+                        {
+                            label: 'Módulo completado',
+                            data: payload.modulos.completados.map(v => v ? 100 : 0),
+                            backgroundColor: 'rgba(46, 204, 113, 0.5)',
+                            borderColor: 'rgba(39, 174, 96, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Promedio de puntaje (%)',
+                            data: payload.modulos.promedios,
+                            backgroundColor: 'rgba(52, 152, 219, 0.4)',
+                            borderColor: 'rgba(41, 128, 185, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Porcentaje (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    if (label === 'Módulo completado') {
+                                        return `${label}: ${value === 100 ? 'Sí' : 'No'}`;
+                                    }
+                                    return `${label}: ${value}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico de línea de tiempo de puntajes
+        const ctxTimeline = document.getElementById('timelineChart');
+        if (ctxTimeline && payload.timeline.labels.length) {
+            new Chart(ctxTimeline, {
+                type: 'line',
+                data: {
+                    labels: payload.timeline.labels,
+                    datasets: [{
+                        label: 'Puntaje (%)',
+                        data: payload.timeline.scores,
+                        fill: false,
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+    })();
+</script>
+
+{% endblock %}

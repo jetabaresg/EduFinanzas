@@ -90,7 +90,7 @@
                         Volver al modulo
                     </a>
                     {% if not aprobado %}
-                    <a href="{% url 'iniciar_evaluacion' contenido.id %}" class="btn btn-primary">
+                    <a href="{% url 'ver_contenido' contenido.id %}" class="btn btn-primary">
                         Intentar nuevamente
                     </a>
                     {% endif %}
