@@ -6,7 +6,10 @@ from django.utils import timezone
 from django.db.models import Avg
 from django.http import JsonResponse
 from .models import Modulo, Contenido, Feedback, Progreso,Pregunta, OpcionRespuesta, IntentoEvaluacion, RespuestaUsuario
-
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import Modulo, Contenido
+from .forms import ModuloForm, ContenidoForm
 
 # ===========================
 #   PÁGINAS PRINCIPALES
@@ -394,3 +397,113 @@ def estadisticas(request):
     }
 
     return render(request, "estadisticas.html", contexto)
+
+def admin_modulos_lista(request):
+    modulos = Modulo.objects.all().order_by('orden')
+    return render(request, 'admin_contenido/admin_modulos_lista.html', {'modulos': modulos})
+
+# ==========================
+# ADMIN: CREAR MÓDULO
+# ==========================
+def admin_modulo_crear(request):
+    if request.method == 'POST':
+        form = ModuloForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Módulo creado correctamente.")
+            return redirect('admin_modulos_lista')
+    else:
+        form = ModuloForm()
+
+    return render(request, 'admin_contenido/admin_modulo_form.html', {'form': form})
+
+# ==========================
+# ADMIN: EDITAR MÓDULO
+# ==========================
+def admin_modulo_editar(request, modulo_id):
+    modulo = get_object_or_404(Modulo, id=modulo_id)
+
+    if request.method == 'POST':
+        form = ModuloForm(request.POST, instance=modulo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Módulo actualizado correctamente.")
+            return redirect('admin_modulos_lista')
+    else:
+        form = ModuloForm(instance=modulo)
+
+    return render(request, 'admin_contenido/admin_modulo_form.html', {'form': form})
+
+# ==========================
+# ADMIN: ELIMINAR MÓDULO
+# ==========================
+def admin_modulo_eliminar(request, modulo_id):
+    modulo = get_object_or_404(Modulo, id=modulo_id)
+    modulo.delete()
+    messages.warning(request, "Módulo eliminado.")
+    return redirect('admin_modulos_lista')
+
+# ==========================
+# ADMIN: LISTA CONTENIDOS
+# ==========================
+def admin_contenidos_lista(request, modulo_id):
+    modulo = get_object_or_404(Modulo, id=modulo_id)
+    contenidos = Contenido.objects.filter(modulo=modulo).order_by('orden')
+
+    return render(request, 'admin_contenido/admin_contenidos_lista.html', {
+        'modulo': modulo,
+        'contenidos': contenidos
+    })
+
+# ==========================
+# ADMIN: CREAR CONTENIDO
+# ==========================
+def admin_contenido_crear(request, modulo_id):
+    modulo = get_object_or_404(Modulo, id=modulo_id)
+
+    if request.method == 'POST':
+        form = ContenidoForm(request.POST, request.FILES)
+        if form.is_valid():
+            contenido = form.save(commit=False)
+            contenido.modulo = modulo
+            contenido.save()
+            messages.success(request, "Contenido creado correctamente.")
+            return redirect('admin_contenidos_lista', modulo_id=modulo.id)
+    else:
+        form = ContenidoForm()
+
+    return render(request, 'admin_contenido/admin_contenido_form.html', {
+        'form': form,
+        'modulo': modulo
+    })
+
+# ==========================
+# ADMIN: EDITAR CONTENIDO
+# ==========================
+def admin_contenido_editar(request, contenido_id):
+    contenido = get_object_or_404(Contenido, id=contenido_id)
+
+    if request.method == 'POST':
+        form = ContenidoForm(request.POST, request.FILES, instance=contenido)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Contenido actualizado.")
+            return redirect('admin_contenidos_lista', modulo_id=contenido.modulo.id)
+    else:
+        form = ContenidoForm(instance=contenido)
+
+    return render(request, 'admin_contenido/admin_contenido_form.html', {
+        'form': form,
+        'modulo': contenido.modulo
+    })
+
+# ==========================
+# ADMIN: ELIMINAR CONTENIDO
+# ==========================
+def admin_contenido_eliminar(request, contenido_id):
+    contenido = get_object_or_404(Contenido, id=contenido_id)
+    modulo_id = contenido.modulo.id
+    contenido.delete()
+    messages.warning(request, "Contenido eliminado.")
+    return redirect('admin_contenidos_lista', modulo_id=modulo_id)
+    
