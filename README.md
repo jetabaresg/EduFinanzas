@@ -78,6 +78,8 @@
     </tr>
     <tr><td><strong>CU-06</strong></td><td>Consultar progreso</td><td>Usuario</td><td>Consulta su avance y resultados.</td></tr>
     <tr><td><strong>CU-05</strong></td><td>Presentar evaluación</td><td>Usuario</td><td>Responde y envía la evaluación del módulo.</td></tr>
+    <tr><td><strong>CU-09</strong></td><td>Administrar contenido</td><td>Administrador</td><td>Crear, editar y eliminar módulos.</td></tr>
+    <tr><td><strong>CU-10</strong></td><td>Consultar estadísticas</td><td>Administrador</td><td>Muestra reportes del sistema.</td></tr>
 </table>
 
 <h3><strong>Pendientes</strong></h3>
@@ -91,8 +93,7 @@
     <tr><td><strong>CU-03</strong></td><td>Simulaciones financieras</td><td>Usuario registrado</td><td>Ejecuta ejercicios sobre ahorro, gasto o inversión.</td></tr>
     <tr><td><strong>CU-07</strong></td><td>Recibir notificaciones</td><td>Usuario</td><td>Recibe alertas sobre actividades pendientes.</td></tr>
     <tr><td><strong>CU-08</strong></td><td>Sincronizar progreso</td><td>Usuario</td><td>Guarda avances entre dispositivos.</td></tr>
-    <tr><td><strong>CU-09</strong></td><td>Administrar contenido</td><td>Administrador</td><td>Crear, editar y eliminar módulos.</td></tr>
-    <tr><td><strong>CU-10</strong></td><td>Consultar estadísticas</td><td>Administrador</td><td>Muestra reportes del sistema.</td></tr>
+    
     <tr><td><strong>CU-11</strong></td><td>Gestionar usuarios</td><td>Administrador</td><td>Crear, editar o eliminar cuentas.</td></tr>
 </table>
 
