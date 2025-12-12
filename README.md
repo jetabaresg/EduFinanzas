@@ -93,7 +93,6 @@
     <tr><td><strong>CU-03</strong></td><td>Simulaciones financieras</td><td>Usuario registrado</td><td>Ejecuta ejercicios sobre ahorro, gasto o inversión.</td></tr>
     <tr><td><strong>CU-07</strong></td><td>Recibir notificaciones</td><td>Usuario</td><td>Recibe alertas sobre actividades pendientes.</td></tr>
     <tr><td><strong>CU-08</strong></td><td>Sincronizar progreso</td><td>Usuario</td><td>Guarda avances entre dispositivos.</td></tr>
-    
     <tr><td><strong>CU-11</strong></td><td>Gestionar usuarios</td><td>Administrador</td><td>Crear, editar o eliminar cuentas.</td></tr>
 </table>
 
